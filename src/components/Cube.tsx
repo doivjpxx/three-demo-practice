@@ -55,7 +55,8 @@ const Cube = ({ id, geometry, color }: CubeProps): JSX.Element => {
 
     // init material
     const material = new THREE.MeshPhongMaterial({
-      color
+      color,
+      flatShading: true,
     });
 
     // init mesh
