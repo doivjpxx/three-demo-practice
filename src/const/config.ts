@@ -20,6 +20,9 @@ export const lightPosistion = {
   z: 4,
 };
 
+// plan size
+export const planeSize = 40;
+
 // controls
 export const enableDamping = true;
 export const dampingFactor = 0.5;

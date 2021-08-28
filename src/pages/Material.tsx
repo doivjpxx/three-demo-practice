@@ -1,11 +1,6 @@
-import styled from 'styled-components';
 import * as THREE from 'three';
 import Cube, { CubeProps } from '../components/Cube';
-
-const Container = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`;
+import { Container } from '../shared/styled';
 
 const Material = (): JSX.Element => {
   const arr: CubeProps[] = [
