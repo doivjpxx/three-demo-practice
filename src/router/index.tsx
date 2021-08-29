@@ -1,6 +1,7 @@
 import { Switch, Route, NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import Home from '../pages/Home';
+import House from '../pages/House';
 import Light from '../pages/Light';
 import Material from '../pages/Material';
 
@@ -42,6 +43,7 @@ const AppRouter = (): JSX.Element => {
         </NavLink>
         <NavLink to="/material">Material</NavLink>
         <NavLink to="/light">Light</NavLink>
+        <NavLink to="/house">House</NavLink>
       </StyledNav>
       <Switch>
         <Route path="/material">
@@ -49,6 +51,9 @@ const AppRouter = (): JSX.Element => {
         </Route>
         <Route path="/light">
           <Light />
+        </Route>
+        <Route path="/house">
+          <House />
         </Route>
         <Route path="/">
           <Home />
