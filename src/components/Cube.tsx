@@ -1,22 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { BufferGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { fov, sizes } from '../const/config';
 import Card from './Card';
 
 export type CubeProps = {
-  id: number | string;
-  geometry: any;
+  geometry: BufferGeometry;
   color: string | number;
 };
 
-const Cube = ({ id, geometry, color }: CubeProps): JSX.Element => {
+const Cube = ({ geometry, color }: CubeProps): JSX.Element => {
+  const mount = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const canvas = document.getElementById(id.toString());
-
-    if (!canvas) {
+    if (!mount.current) {
       return;
     }
+    let width = mount.current.clientWidth;
+    let height = mount.current.clientHeight;
+    let frameId = 0;
 
     const camera = new THREE.PerspectiveCamera(
       fov,
@@ -39,7 +41,6 @@ const Cube = ({ id, geometry, color }: CubeProps): JSX.Element => {
 
     // init renderer
     const renderer = new THREE.WebGLRenderer({
-      canvas,
       antialias: true,
       alpha: true
     });
@@ -47,7 +48,7 @@ const Cube = ({ id, geometry, color }: CubeProps): JSX.Element => {
     renderer.setSize(sizes.width, sizes.height);
 
     // init orbit controls
-    const controls = new OrbitControls(camera, canvas);
+    const controls = new OrbitControls(camera, mount.current);
     controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
@@ -56,7 +57,7 @@ const Cube = ({ id, geometry, color }: CubeProps): JSX.Element => {
     // init material
     const material = new THREE.MeshPhongMaterial({
       color,
-      flatShading: true,
+      flatShading: true
     });
 
     // init mesh
@@ -66,19 +67,53 @@ const Cube = ({ id, geometry, color }: CubeProps): JSX.Element => {
     // add mesh to scene
     scene.add(mesh);
 
-    // final step
-    // render the cube
-    function animate() {
+    const renderScene = () => {
+      renderer.render(scene, camera);
+    };
+
+    const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
-    }
+    };
 
-    animate();
+    const handleResize = () => {
+      if (!mount || !mount.current) {
+        return;
+      }
+      width = mount.current.clientWidth;
+      height = mount.current.clientHeight;
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderScene();
+    };
+
+    const start = () => {
+      if (!frameId) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    const stop = () => {
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+    };
+
+    mount.current.appendChild(renderer.domElement);
+    window.addEventListener('resize', handleResize);
+
+    start();
+
+    return () => {
+      stop();
+      window.removeEventListener('resize', handleResize);
+      mount.current?.removeChild(renderer.domElement);
+    };
   }, []);
   return (
     <Card>
-      <canvas id={id.toString()}></canvas>
+      <div ref={mount}></div>
     </Card>
   );
 };

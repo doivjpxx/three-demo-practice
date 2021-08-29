@@ -1,16 +1,20 @@
+import { useRef } from 'react';
 import { useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { planeSize } from '../const/config';
-// import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
 
 const Light = (): JSX.Element => {
-  useEffect(() => {
-    const canvas = document.getElementById('l');
+  const mount = useRef<HTMLDivElement>(null);
 
-    if (!canvas) {
+  useEffect(() => {
+    if (!mount.current) {
       return;
     }
+    let width = mount.current.clientWidth;
+    let height = mount.current.clientHeight;
+    let frameId = 0;
+
     // 1. init scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('black');
@@ -55,31 +59,6 @@ const Light = (): JSX.Element => {
     spotLight.target.position.x = -0.75;
     scene.add(spotLight.target);
 
-    // Helpers
-    // const hemisphereLightHelper = new THREE.HemisphereLightHelper(
-    //   hemisphereLight,
-    //   0.2
-    // );
-    // scene.add(hemisphereLightHelper);
-
-    // const directionalLightHelper = new THREE.DirectionalLightHelper(
-    //   directionalLight,
-    //   0.2
-    // );
-    // scene.add(directionalLightHelper);
-
-    // const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2);
-    // scene.add(pointLightHelper);
-
-    // const spotLightHelper = new THREE.SpotLightHelper(spotLight);
-    // scene.add(spotLightHelper);
-    // window.requestAnimationFrame(() => {
-    //   spotLightHelper.update();
-    // });
-
-    // const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight);
-    // scene.add(rectAreaLightHelper);
-
     // 3. init objects
     const material = new THREE.MeshStandardMaterial();
     material.roughness = 0.4;
@@ -123,10 +102,6 @@ const Light = (): JSX.Element => {
     torus.position.x = 8;
     torus.position.y = 2;
 
-    // const gui = new GUI();
-    // gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
-    // gui.add(light, 'intensity', 0, 2, 0.01);
-
     scene.add(sphere, cube, torus, meshPlane);
 
     const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 100);
@@ -136,37 +111,19 @@ const Light = (): JSX.Element => {
 
     // init renderer
     const renderer = new THREE.WebGLRenderer({
-      canvas,
       antialias: true,
       alpha: true
     });
     renderer.setClearColor(0xffffff);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const controls = new OrbitControls(camera, canvas);
+    const controls = new OrbitControls(camera, mount.current);
     controls.target.set(0, 5, 0);
     controls.update();
 
-    function resizeRendererToDisplaySize(renderer: any) {
-      const canvas = renderer.domElement;
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      const needResize = canvas.width !== width || canvas.height !== height;
-      if (needResize) {
-        renderer.setSize(width, height, false);
-      }
-      return needResize;
-    }
-
     const clock = new THREE.Clock();
 
-    function render() {
-      if (resizeRendererToDisplaySize(renderer)) {
-        const canvas = renderer.domElement;
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
-      }
-
+    const animate = () => {
       const elapsedTime = clock.getElapsedTime();
 
       // Update objects
@@ -178,17 +135,59 @@ const Light = (): JSX.Element => {
       cube.rotation.x = 0.3 * elapsedTime;
       torus.rotation.x = 0.3 * elapsedTime;
 
-      // Update controls
+      requestAnimationFrame(animate);
       controls.update();
-
       renderer.render(scene, camera);
+    };
 
-      requestAnimationFrame(render);
-    }
+    const renderScene = () => {
+      renderer.render(scene, camera);
+    };
 
-    requestAnimationFrame(render);
+    const handleResize = () => {
+      // Update sizes
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      // Update camera
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      // Update renderer
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderScene();
+    };
+
+    const start = () => {
+      if (!frameId) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    const stop = () => {
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+    };
+
+    mount.current.appendChild(renderer.domElement);
+    window.addEventListener('resize', handleResize);
+
+    start();
+
+    return () => {
+      stop();
+      scene.remove(cube);
+      material.dispose();
+      meshPlane.remove();
+      sphere.remove();
+      cube.remove();
+      torus.remove();
+      window.removeEventListener('resize', handleResize);
+      mount.current?.removeChild(renderer.domElement);
+    };
   }, []);
-  return <canvas id="l"></canvas>;
+  return <div ref={mount} />;
 };
 
 export default Light;
