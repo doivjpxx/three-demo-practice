@@ -1,66 +1,36 @@
+import { useRef } from 'react';
 import { useEffect } from 'react';
 import * as THREE from 'three';
-// import * as dat from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-// dat
-// const gui = new dat.GUI();
+/**
+ * Sizes
+ */
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight
+};
+
+const textureLoader = new THREE.TextureLoader();
 
 const House = (): JSX.Element => {
-  useEffect(() => {
-    // Canvas
-    const canvas = document.getElementById('h');
+  const mount = useRef<HTMLDivElement>(null);
 
-    if (!canvas) {
-      return;
-    }
+  const createCamera = () => {
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      sizes.width / sizes.height,
+      0.1,
+      100
+    );
+    camera.position.x = 4;
+    camera.position.y = 2;
+    camera.position.z = 5;
 
-    const fog = new THREE.Fog('#262837', 1, 15);
+    return camera;
+  };
 
-    // Scene
-    const scene = new THREE.Scene();
-
-    scene.fog = fog;
-    /**
-     * Textures
-     */
-    const textureLoader = new THREE.TextureLoader();
-
-    const doorColorTexture = textureLoader.load(
-      '/assets/textures/door/color.jpg'
-    );
-    const doorAlphaTexture = textureLoader.load(
-      '/assets/textures/door/alpha.jpg'
-    );
-    const doorAmbientOcclusionTexture = textureLoader.load(
-      '/assets/textures/door/ambientOcclusion.jpg'
-    );
-    const doorHeightTexture = textureLoader.load(
-      '/assets/textures/door/height.jpg'
-    );
-    const doorMetalnessTexture = textureLoader.load(
-      '/assets/textures/door/metalness.jpg'
-    );
-    const doorRoughnessTexture = textureLoader.load(
-      '/assets/textures/door/roughness.jpg'
-    );
-    const doorNormalTexture = textureLoader.load(
-      '/assets/textures/door/normal.jpg'
-    );
-
-    const brickColorTexture = textureLoader.load(
-      '/assets/textures/bricks/color.jpg'
-    );
-    const brickAmbientOcclusionTexture = textureLoader.load(
-      '/assets/textures/bricks/ambientOcclusion.jpg'
-    );
-    const brickRoughnessTexture = textureLoader.load(
-      '/assets/textures/bricks/roughness.jpg'
-    );
-    const brickNormalTexture = textureLoader.load(
-      '/assets/textures/bricks/normal.jpg'
-    );
-
+  const createFloorMesh = () => {
     const grassColorTexture = textureLoader.load(
       '/assets/textures/grass/color.jpg'
     );
@@ -89,13 +59,40 @@ const House = (): JSX.Element => {
     grassRoughnessTexture.wrapT = THREE.RepeatWrapping;
     grassNormalTexture.wrapT = THREE.RepeatWrapping;
 
-    /**
-     * House
-     */
-    const house = new THREE.Group();
-    scene.add(house);
+    const floor = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(20, 20),
+      new THREE.MeshStandardMaterial({
+        color: '#a9c388',
+        map: grassColorTexture,
+        normalMap: grassNormalTexture,
+        aoMap: grassAmbientOcclusionTexture,
+        roughnessMap: grassRoughnessTexture
+      })
+    );
+    floor.geometry.setAttribute(
+      'uv2',
+      new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
+    );
+    floor.rotation.x = -Math.PI * 0.5;
+    floor.position.y = 0;
 
-    // Walls
+    return floor;
+  };
+
+  const createWallsMesh = () => {
+    const brickColorTexture = textureLoader.load(
+      '/assets/textures/bricks/color.jpg'
+    );
+    const brickAmbientOcclusionTexture = textureLoader.load(
+      '/assets/textures/bricks/ambientOcclusion.jpg'
+    );
+    const brickRoughnessTexture = textureLoader.load(
+      '/assets/textures/bricks/roughness.jpg'
+    );
+    const brickNormalTexture = textureLoader.load(
+      '/assets/textures/bricks/normal.jpg'
+    );
+
     const walls = new THREE.Mesh(
       new THREE.BoxBufferGeometry(4, 2.5, 4),
       new THREE.MeshStandardMaterial({
@@ -111,16 +108,32 @@ const House = (): JSX.Element => {
       new THREE.Float32BufferAttribute(walls.geometry.attributes.uv.array, 2)
     );
     walls.position.y = 2.5 / 2;
-    house.add(walls);
 
-    // Roof
-    const roof = new THREE.Mesh(
-      new THREE.ConeBufferGeometry(3.5, 1, 4),
-      new THREE.MeshStandardMaterial({ color: '#b35f45' })
+    return walls;
+  };
+
+  const createDoorMesh = () => {
+    const doorColorTexture = textureLoader.load(
+      '/assets/textures/door/color.jpg'
     );
-    roof.position.y = 2.5 + 1 / 2;
-    roof.rotation.y = Math.PI * 0.25;
-    house.add(roof);
+    const doorAlphaTexture = textureLoader.load(
+      '/assets/textures/door/alpha.jpg'
+    );
+    const doorAmbientOcclusionTexture = textureLoader.load(
+      '/assets/textures/door/ambientOcclusion.jpg'
+    );
+    const doorHeightTexture = textureLoader.load(
+      '/assets/textures/door/height.jpg'
+    );
+    const doorMetalnessTexture = textureLoader.load(
+      '/assets/textures/door/metalness.jpg'
+    );
+    const doorRoughnessTexture = textureLoader.load(
+      '/assets/textures/door/roughness.jpg'
+    );
+    const doorNormalTexture = textureLoader.load(
+      '/assets/textures/door/normal.jpg'
+    );
 
     const door = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(2, 2, 100, 100),
@@ -143,9 +156,22 @@ const House = (): JSX.Element => {
     );
     door.position.y = 1;
     door.position.z = 2 + 0.01;
-    house.add(door);
 
-    // Bushes
+    return door;
+  };
+
+  const createRoofMesh = () => {
+    const roof = new THREE.Mesh(
+      new THREE.ConeBufferGeometry(3.5, 1, 4),
+      new THREE.MeshStandardMaterial({ color: '#b35f45' })
+    );
+    roof.position.y = 2.5 + 1 / 2;
+    roof.rotation.y = Math.PI * 0.25;
+
+    return roof;
+  };
+
+  const createBushes = () => {
     const bushGeometry = new THREE.SphereBufferGeometry(1, 16, 16);
     const bushMaterial = new THREE.MeshStandardMaterial({ color: '#89c854' });
 
@@ -165,11 +191,11 @@ const House = (): JSX.Element => {
     bush4.scale.set(0.15, 0.15, 0.15);
     bush4.position.set(-1, 0.1, 2.5);
 
-    house.add(bush1, bush2, bush3, bush4);
+    return [bush1, bush2, bush3, bush4];
+  };
 
-    // Graves
+  const createGraves = () => {
     const graves = new THREE.Group();
-    scene.add(graves);
 
     const graveGeometry = new THREE.BoxBufferGeometry(0.6, 0.8, 0.2);
     const graveMaterial = new THREE.MeshStandardMaterial({ color: '#b2b6b1' });
@@ -194,23 +220,53 @@ const House = (): JSX.Element => {
       graves.add(grave);
     }
 
+    return graves;
+  };
+
+  useEffect(() => {
+    // Canvas
+    if (!mount.current) {
+      return;
+    }
+    let width = mount.current.clientWidth;
+    let height = mount.current.clientHeight;
+    let frameId = 0;
+
+    // Init fog
+    const fog = new THREE.Fog('#262837', 1, 15);
+
+    // Scene
+    const scene = new THREE.Scene();
+
+    scene.fog = fog;
+
+    /**
+     * House
+     */
+    const house = new THREE.Group();
+    scene.add(house);
+
+    // Walls
+    const walls = createWallsMesh();
+    house.add(walls);
+
+    // Roof
+    const roof = createRoofMesh();
+    house.add(roof);
+
+    const door = createDoorMesh();
+    house.add(door);
+
+    // Bushes
+    const bushes = createBushes();
+    house.add(...bushes);
+
+    // Graves
+    const graves = createGraves();
+    scene.add(graves);
+
     // Floor
-    const floor = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(20, 20),
-      new THREE.MeshStandardMaterial({
-        color: '#a9c388',
-        map: grassColorTexture,
-        normalMap: grassNormalTexture,
-        aoMap: grassAmbientOcclusionTexture,
-        roughnessMap: grassRoughnessTexture
-      })
-    );
-    floor.geometry.setAttribute(
-      'uv2',
-      new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
-    );
-    floor.rotation.x = -Math.PI * 0.5;
-    floor.position.y = 0;
+    const floor = createFloorMesh();
     scene.add(floor);
 
     /**
@@ -236,14 +292,6 @@ const House = (): JSX.Element => {
     const ghost2 = new THREE.PointLight('#00ffff', 2, 3);
     scene.add(ghost2);
 
-    /**
-     * Sizes
-     */
-    const sizes = {
-      width: window.innerWidth,
-      height: window.innerHeight
-    };
-
     window.addEventListener('resize', () => {
       // Update sizes
       sizes.width = window.innerWidth;
@@ -262,27 +310,17 @@ const House = (): JSX.Element => {
      * Camera
      */
     // Base camera
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      sizes.width / sizes.height,
-      0.1,
-      100
-    );
-    camera.position.x = 4;
-    camera.position.y = 2;
-    camera.position.z = 5;
+    const camera = createCamera();
     scene.add(camera);
 
     // Controls
-    const controls = new OrbitControls(camera, canvas);
+    const controls = new OrbitControls(camera, mount.current);
     controls.enableDamping = true;
 
     /**
      * Renderer
      */
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas
-    });
+    const renderer = new THREE.WebGLRenderer();
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor('#262837');
@@ -290,7 +328,7 @@ const House = (): JSX.Element => {
     // SHADOWs
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
+
     moonLight.castShadow = true;
     doorLight.castShadow = true;
 
@@ -298,13 +336,9 @@ const House = (): JSX.Element => {
     ghost2.castShadow = true;
 
     walls.castShadow = true;
-    bush1.castShadow = true;
-    bush2.castShadow = true;
-    bush3.castShadow = true;
-    bush4.castShadow = true;
+    bushes.forEach((b) => (b.castShadow = true));
 
     floor.receiveShadow = true;
-
 
     doorLight.shadow.mapSize.width = 256;
     doorLight.shadow.mapSize.height = 256;
@@ -323,7 +357,7 @@ const House = (): JSX.Element => {
      */
     const clock = new THREE.Clock();
 
-    const tick = () => {
+    const animate = () => {
       const elapsedTime = clock.getElapsedTime();
 
       // Update ghosts
@@ -332,10 +366,11 @@ const House = (): JSX.Element => {
       ghost1.position.z = Math.sin(ghost1Angle) * 4;
       ghost1.position.y = Math.sin(elapsedTime * 3);
 
-      const ghost2Angle = - elapsedTime * 0.31;
+      const ghost2Angle = -elapsedTime * 0.31;
       ghost2.position.x = Math.cos(ghost2Angle) * 5;
       ghost2.position.z = Math.sin(ghost2Angle) * 5;
-      ghost2.position.y = Math.sin(elapsedTime * 4) + Math.sin(elapsedTime * 2.5);
+      ghost2.position.y =
+        Math.sin(elapsedTime * 4) + Math.sin(elapsedTime * 2.5);
 
       // Update controls
       controls.update();
@@ -344,12 +379,56 @@ const House = (): JSX.Element => {
       renderer.render(scene, camera);
 
       // Call tick again on the next frame
-      window.requestAnimationFrame(tick);
+      window.requestAnimationFrame(animate);
     };
 
-    tick();
+    const renderScene = () => {
+      renderer.render(scene, camera);
+    };
+
+    const handleResize = () => {
+      // Update sizes
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      // Update camera
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      // Update renderer
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderScene();
+    };
+
+    const start = () => {
+      if (!frameId) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    const stop = () => {
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+    };
+
+    mount.current.appendChild(renderer.domElement);
+    window.addEventListener('resize', handleResize);
+
+    // START THREE
+    start();
+
+    return () => {
+      stop();
+      scene.remove(floor, house, graves);
+      house.clear();
+      floor.clear();
+      graves.clear();
+      window.removeEventListener('resize', handleResize);
+      mount.current?.removeChild(renderer.domElement);
+    };
   }, []);
-  return <canvas id="h" />;
+  return <div ref={mount} />;
 };
 
 export default House;

@@ -104,7 +104,7 @@ const Light = (): JSX.Element => {
 
     scene.add(sphere, cube, torus, meshPlane);
 
-    const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 10, 30);
 
     scene.add(camera);

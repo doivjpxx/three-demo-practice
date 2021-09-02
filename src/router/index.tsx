@@ -1,9 +1,12 @@
 import { Switch, Route, NavLink } from 'react-router-dom';
 import styled from 'styled-components';
-import Home from '../pages/Home';
-import House from '../pages/House';
-import Light from '../pages/Light';
-import Material from '../pages/Material';
+import loadable from '@loadable/component';
+
+const Earth = loadable(() => import('../pages/Earth'));
+const Home = loadable(() => import('../pages/Home'));
+const House = loadable(() => import('../pages/House'));
+const Light = loadable(() => import('../pages/Light'));
+const Material = loadable(() => import('../pages/Material'));
 
 const StyledNav = styled.nav`
   overflow: hidden;
@@ -44,6 +47,7 @@ const AppRouter = (): JSX.Element => {
         <NavLink to="/material">Material</NavLink>
         <NavLink to="/light">Light</NavLink>
         <NavLink to="/house">House</NavLink>
+        <NavLink to="/earth">Earth</NavLink>
       </StyledNav>
       <Switch>
         <Route path="/material">
@@ -54,6 +58,9 @@ const AppRouter = (): JSX.Element => {
         </Route>
         <Route path="/house">
           <House />
+        </Route>
+        <Route path="/earth">
+          <Earth />
         </Route>
         <Route path="/">
           <Home />
