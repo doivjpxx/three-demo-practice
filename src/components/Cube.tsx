@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { BufferGeometry } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { fov, sizes } from '../const/config';
+import { handleResize, start, stop } from '../utils/three';
 import Card from './Card';
 
 export type CubeProps = {
@@ -16,9 +17,9 @@ const Cube = ({ geometry, color }: CubeProps): JSX.Element => {
     if (!mount.current) {
       return;
     }
-    let width = mount.current.clientWidth;
-    let height = mount.current.clientHeight;
-    let frameId = 0;
+    const width = mount.current.clientWidth;
+    const height = mount.current.clientHeight;
+    const frameId = Math.floor(Math.random() * 1000);
 
     const camera = new THREE.PerspectiveCamera(
       fov,
@@ -67,47 +68,24 @@ const Cube = ({ geometry, color }: CubeProps): JSX.Element => {
     // add mesh to scene
     scene.add(mesh);
 
-    const renderScene = () => {
-      renderer.render(scene, camera);
-    };
-
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     };
 
-    const handleResize = () => {
-      if (!mount || !mount.current) {
-        return;
-      }
-      width = mount.current.clientWidth;
-      height = mount.current.clientHeight;
-      renderer.setSize(width, height);
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderScene();
-    };
-
-    const start = () => {
-      if (!frameId) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-
-    const stop = () => {
-      cancelAnimationFrame(frameId);
-      frameId = 0;
-    };
-
     mount.current.appendChild(renderer.domElement);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', () =>
+      handleResize(width, height, { renderer, camera, scene })
+    );
 
-    start();
+    start(frameId, animate);
 
     return () => {
-      stop();
-      window.removeEventListener('resize', handleResize);
+      stop(frameId);
+      window.removeEventListener('resize', () =>
+        handleResize(width, height, { renderer, camera, scene })
+      );
       mount.current?.removeChild(renderer.domElement);
     };
   }, []);

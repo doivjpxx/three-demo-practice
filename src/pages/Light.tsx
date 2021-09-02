@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { planeSize } from '../const/config';
+import { handleResize, start, stop } from '../utils/three';
 
 const Light = (): JSX.Element => {
   const mount = useRef<HTMLDivElement>(null);
@@ -11,9 +12,9 @@ const Light = (): JSX.Element => {
     if (!mount.current) {
       return;
     }
-    let width = mount.current.clientWidth;
-    let height = mount.current.clientHeight;
-    let frameId = 0;
+    const width = mount.current.clientWidth;
+    const height = mount.current.clientHeight;
+    const frameId = Math.floor(Math.random() * 1000);
 
     // 1. init scene
     const scene = new THREE.Scene();
@@ -104,7 +105,12 @@ const Light = (): JSX.Element => {
 
     scene.add(sphere, cube, torus, meshPlane);
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
     camera.position.set(0, 10, 30);
 
     scene.add(camera);
@@ -140,50 +146,24 @@ const Light = (): JSX.Element => {
       renderer.render(scene, camera);
     };
 
-    const renderScene = () => {
-      renderer.render(scene, camera);
-    };
-
-    const handleResize = () => {
-      // Update sizes
-      width = window.innerWidth;
-      height = window.innerHeight;
-
-      // Update camera
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-
-      // Update renderer
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderScene();
-    };
-
-    const start = () => {
-      if (!frameId) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-
-    const stop = () => {
-      cancelAnimationFrame(frameId);
-      frameId = 0;
-    };
-
     mount.current.appendChild(renderer.domElement);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', () =>
+      handleResize(width, height, { renderer, camera, scene })
+    );
 
-    start();
+    start(frameId, animate);
 
     return () => {
-      stop();
+      stop(frameId);
       scene.remove(cube);
       material.dispose();
       meshPlane.remove();
       sphere.remove();
       cube.remove();
       torus.remove();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', () =>
+        handleResize(width, height, { renderer, camera, scene })
+      );
       mount.current?.removeChild(renderer.domElement);
     };
   }, []);

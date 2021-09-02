@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { handleResize, start, stop } from '../utils/three';
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -81,9 +82,9 @@ const Earth = (): JSX.Element => {
     if (!mount.current) {
       return;
     }
-    let width = mount.current.clientWidth;
-    let height = mount.current.clientHeight;
-    let frameId = 0;
+    const width = mount.current.clientWidth;
+    const height = mount.current.clientHeight;
+    const frameId = Math.floor(Math.random() * 1000);
 
     // 1. init scene
     const scene = new THREE.Scene();
@@ -133,48 +134,22 @@ const Earth = (): JSX.Element => {
       renderer.render(scene, camera);
     };
 
-    const renderScene = () => {
-      renderer.render(scene, camera);
-    };
-
-    const handleResize = () => {
-      // Update sizes
-      width = window.innerWidth;
-      height = window.innerHeight;
-
-      // Update camera
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-
-      // Update renderer
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderScene();
-    };
-
-    const start = () => {
-      if (!frameId) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-
-    const stop = () => {
-      cancelAnimationFrame(frameId);
-      frameId = 0;
-    };
-
     mount.current.appendChild(renderer.domElement);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', () =>
+      handleResize(width, height, { camera, renderer, scene })
+    );
 
     // START THREE
-    start();
+    start(frameId, animate);
 
     return () => {
-      stop();
+      stop(frameId);
       scene.remove(earthmesh, cloudMesh);
       earthmesh.clear();
       cloudMesh.clear();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', () =>
+        handleResize(width, height, { camera, renderer, scene })
+      );
       mount.current?.removeChild(renderer.domElement);
     };
   }, []);

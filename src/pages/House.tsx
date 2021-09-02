@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { handleResize, start, stop } from '../utils/three';
 
 /**
  * Sizes
@@ -228,9 +229,9 @@ const House = (): JSX.Element => {
     if (!mount.current) {
       return;
     }
-    let width = mount.current.clientWidth;
-    let height = mount.current.clientHeight;
-    let frameId = 0;
+    const width = mount.current.clientWidth;
+    const height = mount.current.clientHeight;
+    const frameId = Math.floor(Math.random() * 1000);
 
     // Init fog
     const fog = new THREE.Fog('#262837', 1, 15);
@@ -291,20 +292,6 @@ const House = (): JSX.Element => {
 
     const ghost2 = new THREE.PointLight('#00ffff', 2, 3);
     scene.add(ghost2);
-
-    window.addEventListener('resize', () => {
-      // Update sizes
-      sizes.width = window.innerWidth;
-      sizes.height = window.innerHeight;
-
-      // Update camera
-      camera.aspect = sizes.width / sizes.height;
-      camera.updateProjectionMatrix();
-
-      // Update renderer
-      renderer.setSize(sizes.width, sizes.height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    });
 
     /**
      * Camera
@@ -382,49 +369,23 @@ const House = (): JSX.Element => {
       window.requestAnimationFrame(animate);
     };
 
-    const renderScene = () => {
-      renderer.render(scene, camera);
-    };
-
-    const handleResize = () => {
-      // Update sizes
-      width = window.innerWidth;
-      height = window.innerHeight;
-
-      // Update camera
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-
-      // Update renderer
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderScene();
-    };
-
-    const start = () => {
-      if (!frameId) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-
-    const stop = () => {
-      cancelAnimationFrame(frameId);
-      frameId = 0;
-    };
-
     mount.current.appendChild(renderer.domElement);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', () =>
+      handleResize(width, height, { renderer, camera, scene })
+    );
 
     // START THREE
-    start();
+    start(frameId, animate);
 
     return () => {
-      stop();
+      stop(frameId);
       scene.remove(floor, house, graves);
       house.clear();
       floor.clear();
       graves.clear();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', () =>
+        handleResize(width, height, { renderer, camera, scene })
+      );
       mount.current?.removeChild(renderer.domElement);
     };
   }, []);
