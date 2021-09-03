@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 const StyledContainer = styled.div`
   padding: 8px;
+  margin: 20px;
 `;
 
 const StyledText = styled.p`
@@ -29,7 +30,8 @@ const Home = (): JSX.Element => {
   return (
     <StyledContainer ref={textRef}>
       <StyledText>
-        <span style={{ borderBottom: '5px double #cacc5d' }}>Phong Hy</span>
+        <span style={{ borderBottom: '5px double #cacc5d' }}>Welcome</span> to
+        my site
       </StyledText>
       <StyledText>
         Practice site for <span style={{ color: '#009624' }}>GSAP</span> and

@@ -1,6 +1,7 @@
 import { Switch, Route, NavLink } from 'react-router-dom';
-import styled from 'styled-components';
+import { createGlobalStyle } from 'styled-components';
 import loadable from '@loadable/component';
+import Particle from '../pages/Particle';
 
 const Earth = loadable(() => import('../pages/Earth'));
 const Home = loadable(() => import('../pages/Home'));
@@ -8,48 +9,87 @@ const House = loadable(() => import('../pages/House'));
 const Light = loadable(() => import('../pages/Light'));
 const Material = loadable(() => import('../pages/Material'));
 
-const StyledNav = styled.nav`
-  overflow: hidden;
-  background-color: #333;
-
-  & a {
-    float: left;
-    color: #f2f2f2;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-    font-size: 17px;
-
-    &:hover {
-      background-color: #ddd;
-      color: black;
+const StyledNavGlobal = createGlobalStyle`
+  .nav-item {
+    margin: 8px;
+    
+    &::after {
+      content: '';
+      display: block;
+      width: 0px;
+      height: 4px;
+      background: #cacc5d;
+      transition: 0.2s;
+      margin-top: -10px;
     }
-
-    &:active {
-      background-color: #cacc5d;
-      color: white;
+    
+    &:hover::after {
+      width: 100%;
     }
   }
 
-  .active {
-    background-color: #cacc5d;
-    color: white;
+  .nav-link {
+    padding: 15px 5px;
+    transition: 0.2s;
+  }
+
+  .navbar-nav .nav-link {
+    color: #fff;
+    font-weight: bold;
+    font-size: 18px;
+
+    &.active {
+      width: 100%;
+      height: 51px;
+      border-bottom: .25rem solid transparent;
+      border-bottom-color: #cacc5d;
+    }
   }
 `;
 
 const AppRouter = (): JSX.Element => {
   return (
     <div>
-      <StyledNav>
-        <NavLink exact to="/">
-          Home
-        </NavLink>
-        <NavLink to="/material">Material</NavLink>
-        <NavLink to="/light">Light</NavLink>
-        <NavLink to="/house">House</NavLink>
-        <NavLink to="/earth">Earth</NavLink>
-      </StyledNav>
+      <StyledNavGlobal />
+      <nav className="navbar navbar-expand-lg">
+        <ul className="navbar-nav">
+          <li className="nav-item">
+            <NavLink to="/" exact className="nav-link">
+              Home
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/particle" className="nav-link">
+              Particle
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/material" className="nav-link">
+              Material
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/light" className="nav-link">
+              Light
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/house" className="nav-link">
+              House
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/earth" className="nav-link">
+              Earth
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
+
       <Switch>
+        <Route path="/particle">
+          <Particle />
+        </Route>
         <Route path="/material">
           <Material />
         </Route>
